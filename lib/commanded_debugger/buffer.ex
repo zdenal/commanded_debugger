@@ -1,24 +1,30 @@
 defmodule CommandedDebugger.Buffer do
   use GenServer
 
-  @node_name Application.get_env(:commanded_debugger, :buffer)
+  @process_name Application.get_env(:commanded_debugger, :buffer)
 
   alias CommandedDebugger.CommandAudit
 
   def start_link(_) do
-    GenServer.start_link(__MODULE__, [], name: @node_name)
+    GenServer.start_link(__MODULE__, [], name: @process_name)
   end
 
   def push(item) do
-    GenServer.cast(@node_name, {:push, item})
+    GenServer.cast({@process_name, node_address}, {:push, item})
   end
 
   def get_state() do
-    GenServer.call(@node_name, :get_state)
+    GenServer.call({@process_name, node_address}, :get_state)
   end
 
   def update(uuid, data) do
-    GenServer.cast(@node_name, {:update, {uuid, data}})
+    GenServer.cast({@process_name, node_address}, {:update, {uuid, data}})
+  end
+
+  def node_address do
+    [_ | host] = Node.self() |> Atom.to_string() |> String.split("@")
+
+    ["CommandedDebugger" | host] |> Enum.join("@") |> String.to_atom()
   end
 
   @impl true

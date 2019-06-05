@@ -16,8 +16,8 @@ defmodule CommandedDebugger.EventHandler do
       causation_id: metadata.causation_id,
       correlation_id: metadata.correlation_id,
       created_at: metadata.created_at,
-      event_type: Atom.to_string(event.__struct__),
-      data: event,
+      type: Atom.to_string(event.__struct__),
+      data: Map.from_struct(event) |> Jason.encode!(),
       metadata: metadata
     }
   end

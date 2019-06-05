@@ -4,7 +4,7 @@ defmodule CommandedDebugger.EventAudit do
     :causation_id,
     :correlation_id,
     :created_at,
-    :event_type,
+    :type,
     :data,
     :metadata
   ]

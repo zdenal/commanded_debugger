@@ -32,8 +32,8 @@ defmodule CommandedDebugger.Middleware do
       causation_id: causation_id,
       correlation_id: correlation_id,
       occurred_at: occurred_at,
-      command_type: Atom.to_string(command.__struct__),
-      data: Map.from_struct(command),
+      type: Atom.to_string(command.__struct__),
+      data: Map.from_struct(command) |> Jason.encode!(),
       metadata: metadata
     }
 

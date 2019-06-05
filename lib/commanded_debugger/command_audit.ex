@@ -4,7 +4,7 @@ defmodule CommandedDebugger.CommandAudit do
     :causation_id,
     :correlation_id,
     :occurred_at,
-    :command_type,
+    :type,
     :data,
     :metadata,
     :callback_data

@@ -6,12 +6,9 @@ defmodule CommandedDebugger.Debugger do
 
   alias CommandedDebugger.Buffer
   alias Ratatouille.Runtime.{Subscription, Command}
-  alias Ratatouille.Window
 
   @arrow_up key(:arrow_up)
   @arrow_down key(:arrow_down)
-
-  @header "Commanded Debugger (UP/DOWN to select command/event, j/k to scroll content)"
 
   def init(_context) do
     buffer = Buffer.get_state()
@@ -73,7 +70,7 @@ defmodule CommandedDebugger.Debugger do
 
     menu_bar =
       bar do
-        label(content: @header, color: :white)
+        label(content: header(), color: :white)
       end
 
     view(top_bar: menu_bar) do
@@ -112,10 +109,18 @@ defmodule CommandedDebugger.Debugger do
     Enum.at(buffer, cursor)
   end
 
-  defp display_content(%_{} = item), do: Map.from_struct(item) |> Jason.encode!(pretty: true)
+  defp display_content(%_{data: data} = item) do
+    Map.from_struct(item) |> Map.put(:data, Jason.decode!(data)) |> Jason.encode!(pretty: true)
+  end
+
   defp display_content(_), do: ""
 
-  defp title(%{command_type: type}), do: type
-  defp title(%{event_type: type}), do: type
+  defp title(%{type: type}), do: type
   defp title(nil), do: "Nothing selected"
+
+  defp header do
+    "Commanded Debugger (UP/DOWN to select command/event, j/k to scroll content). Node: #{
+      Node.self()
+    }"
+  end
 end

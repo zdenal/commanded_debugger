@@ -5,14 +5,17 @@ defmodule CommandedDebugger.Application do
 
   use Application
 
-  def start(_type, _args) do
+  def start(type, _args) do
     # List all child processes to be supervised
-    children = [
-      # Starts a worker by calling: CommandedDebugger.Worker.start_link(arg)
-      # {CommandedDebugger.Worker, arg}
-      {CommandedDebugger.Buffer, []},
-      {CommandedDebugger.EventHandler, []}
-    ]
+    children =
+      case type do
+        :task ->
+          [{CommandedDebugger.Buffer, []}]
+
+        _ ->
+          CommandedDebugger.Buffer.node_address() |> Node.connect()
+          [{CommandedDebugger.EventHandler, []}]
+      end
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
