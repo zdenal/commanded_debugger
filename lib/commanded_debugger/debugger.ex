@@ -6,6 +6,7 @@ defmodule CommandedDebugger.Debugger do
 
   alias CommandedDebugger.Buffer
   alias Ratatouille.Runtime.{Subscription, Command}
+  alias CommandedDebugger.{EventAudit, CommandAudit}
 
   @arrow_up key(:arrow_up)
   @arrow_down key(:arrow_down)
@@ -115,7 +116,8 @@ defmodule CommandedDebugger.Debugger do
 
   defp display_content(_), do: ""
 
-  defp title(%{type: type}), do: type
+  defp title(%CommandAudit{type: type}), do: type |> String.replace("Elixir.", "[C] ")
+  defp title(%EventAudit{type: type}), do: type |> String.replace("Elixir.", "[E] ")
   defp title(nil), do: "Nothing selected"
 
   defp header do
