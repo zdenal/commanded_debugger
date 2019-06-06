@@ -84,13 +84,13 @@ sure the commands from routers will be sent into buffer also.
 
 
 # TODO
-- [ ] better tree manipulating
-- [ ] better handling new tree structure when new events/commands are comming
-- [ ] better displaying of events/commands
+- [ ] better tree manipulating. Also after getting new events/command the navigating is not working correctly for while as tree was changed.
+- [ ] better handling new tree structure when new events/commands are comming to not changing so much
+- [ ] better displaying of event/command detail (split it to meaningfull sections)
 - [ ] find way how to used this w/ tests (integration test, ...)
 
 # Questions / Issues
-I was trying to start event handler automatically by application inside some project [here](lib/commanded_debugger/application.ex) 17th line, but in some apps getting error
+I was trying to start event handler automatically by application inside debugged project/application [here](lib/commanded_debugger/application.ex) 17th line, but in some apps getting error
 on start
 ```
 ** (Mix) Could not start application commanded_debugger: CommandedDebugger.Application.start(:normal, []) returned an error: shutdown: failed to start child: {CommandedDebugger.EventHandler, "commanded_debugger_event_handler"}
