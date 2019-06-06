@@ -7,6 +7,8 @@ The [commanded_events_map](https://github.com/zdenal/commanded_events_map) is to
 are composed in our app. But we don't see the flows between them as we miss correlations/causations which are available only
 in runtime. This app is allowing that
 
+In saome way this tool could be also used for remote debugging production deploys via ssh binding to server .... (but I am not sure yet).
+
 
 ### Notice
 This application is still under developing. It is not perfect there are still stuff to improve it and make it better (see [TODO section](#todo)).
@@ -70,14 +72,16 @@ events you already have in DB).
 - clone CommandedDebugger somewhere to your disk `git clone git@github.com:zdenal/commanded_debugger.git`
 - go to the repository and run `./bin/start`
 
-The debugger is getting events/commands from your app and you can use your app and see the commands/events flows grouped
-by correlations and linked by causations.
+The debugger is getting events/commands from your app and you can see the commands/events flows grouped
+by correlations and linked by causations. The events/commands are stored only in process state (no persistent layer).
 
 
 ## How it works
 Starting properly your app with `--sname` will allow to comunnicate with CommandedDebugger UI (runned by `./bin/start` from CommandedDebugger repository). The `:commanded_debugger` within
 your `extra_applications` will connect nodes (app & debugger ui). The same with middlewares, they will make
 sure the commands from routers will be sent into buffer also.
+
+The buffer is keeping commands/events in process state and they are not saved anywhere, so it is only for debugging purposes.
 
 #### Picture
 ![design](assets/picture-design.png)
