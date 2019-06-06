@@ -7,6 +7,7 @@ defmodule CommandedDebugger.Debugger do
   alias CommandedDebugger.Buffer
   alias Ratatouille.Runtime.{Subscription, Command}
   alias CommandedDebugger.{EventAudit, CommandAudit}
+  alias CommandedDebugger.Utils.Tree
 
   @arrow_up key(:arrow_up)
   @arrow_down key(:arrow_down)
@@ -80,13 +81,14 @@ defmodule CommandedDebugger.Debugger do
           panel(title: "Commands / Events", height: :fill) do
             # viewport(offset_y: model.module_cursor) do
             viewport do
-              for {item, idx} <- Enum.with_index(model.buffer) do
-                if idx == model.module_cursor do
-                  label(content: "> " <> title(item), attributes: [:bold])
-                else
-                  label(content: title(item))
-                end
-              end
+              # for {item, idx} <- Enum.with_index(model.buffer) do
+              # if idx == model.module_cursor do
+              # label(content: "> " <> title(item), attributes: [:bold])
+              # else
+              # label(content: title(item))
+              # end
+              # end
+              tree_view(model)
             end
           end
         end
@@ -98,6 +100,17 @@ defmodule CommandedDebugger.Debugger do
             end
           end
         end
+      end
+    end
+  end
+
+  defp tree_view(%{buffer: buffer, module_cursor: cursor}) do
+    tree do
+      for {correlation_id, items} <- Tree.group_by(buffer, :correlation_id) do
+        tree_node(
+          [content: correlation_id],
+          Tree.correlation_tree(items)
+        )
       end
     end
   end
