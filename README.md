@@ -24,7 +24,7 @@ This example is made with https://github.com/slashdotdash/conduit. The commands/
 ```elixir
 def deps do
   [
-    {:commanded_debugger, github: "zdenal/commanded_events_map"}
+    {:commanded_debugger, git: "https://github.com/zdenal/commanded_debugger.git"}
   ]
 end
 ```
