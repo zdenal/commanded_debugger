@@ -43,7 +43,7 @@ defmodule CommandedDebugger.Debugger do
     case msg do
       {:event, %{ch: ?r}} ->
         Buffer.reset()
-        %{model | buffer: [], trees: []}
+        %{model | buffer: [], trees: [], content: %{}}
 
       {:event, %{ch: ?k}} ->
         %{model | content_cursor: max(content_cursor - 1, 0)}

@@ -1,7 +1,7 @@
 defmodule CommandedDebugger.Buffer do
   use GenServer
 
-  @process_name Application.get_env(:commanded_debugger, :buffer)
+  @process_name CommadedDebuggerBuffer
 
   alias CommandedDebugger.CommandAudit
   # alias CommandedDebugger.TestState
