@@ -25,8 +25,11 @@ defmodule CommandedDebugger.Utils.Tree do
   end
 
   def correlation_tree(items) do
-    root = get_root(items)
-    tree_node([content: content(root)], get_children(root, items))
+    roots = get_roots(items)
+
+    Enum.map(roots, fn root ->
+      tree_node([content: content(root)], get_children(root, items))
+    end)
   end
 
   defp get_children(root, items) do
@@ -35,14 +38,14 @@ defmodule CommandedDebugger.Utils.Tree do
     Enum.map(children, fn ch -> tree_node([content: content(ch)], get_children(ch, items)) end)
   end
 
-  defp get_root(items) do
+  defp get_roots(items) do
     causation_ids =
       Enum.map(items, fn i -> i.causation_id end)
       |> Enum.filter(fn i -> i != nil end)
 
-    Enum.find(items, fn i -> not Enum.member?(causation_ids, i.causation_id) end)
+    Enum.filter(items, fn i -> not Enum.member?(causation_ids, i.causation_id) end)
   end
 
-  defp content(%CommandAudit{type: type}), do: type |> String.replace("Elixir.", "[C] ")
-  defp content(%EventAudit{type: type}), do: type |> String.replace("Elixir.", "[E] ")
+  defp content(%CommandAudit{type: type}), do: type |> String.replace("Elixir.", "[Com] ")
+  defp content(%EventAudit{type: type}), do: type |> String.replace("Elixir.", "[Evt] ")
 end

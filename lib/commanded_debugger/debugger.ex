@@ -108,7 +108,7 @@ defmodule CommandedDebugger.Debugger do
     tree do
       for {correlation_id, items} <- Tree.group_by(buffer, :correlation_id) do
         tree_node(
-          [content: correlation_id],
+          [content: "[Cor] " <> correlation_id],
           Tree.correlation_tree(items)
         )
       end
@@ -129,8 +129,8 @@ defmodule CommandedDebugger.Debugger do
 
   defp display_content(_), do: ""
 
-  defp title(%CommandAudit{type: type}), do: type |> String.replace("Elixir.", "[C] ")
-  defp title(%EventAudit{type: type}), do: type |> String.replace("Elixir.", "[E] ")
+  defp title(%CommandAudit{type: type}), do: type |> String.replace("Elixir.", "[Com] ")
+  defp title(%EventAudit{type: type}), do: type |> String.replace("Elixir.", "[Evt] ")
   defp title(nil), do: "Nothing selected"
 
   defp header do
