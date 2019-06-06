@@ -100,11 +100,11 @@ defmodule CommandedDebugger.Utils.Tree do
   end
 
   defp get_roots(items) do
-    causation_ids =
-      Enum.map(items, fn i -> i.causation_id end)
+    uuids =
+      Enum.map(items, fn i -> i.uuid end)
       |> Enum.filter(fn i -> i != nil end)
 
-    Enum.filter(items, fn i -> not Enum.member?(causation_ids, i.causation_id) end)
+    Enum.filter(items, fn i -> not Enum.member?(uuids, i.causation_id) end)
   end
 
   defp content(%CommandAudit{type: type}), do: type |> String.replace("Elixir.", "[Com] ")

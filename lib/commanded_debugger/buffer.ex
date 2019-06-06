@@ -4,6 +4,7 @@ defmodule CommandedDebugger.Buffer do
   @process_name Application.get_env(:commanded_debugger, :buffer)
 
   alias CommandedDebugger.CommandAudit
+  # alias CommandedDebugger.TestState
 
   def start_link(_) do
     GenServer.start_link(__MODULE__, [], name: @process_name)
@@ -14,11 +15,16 @@ defmodule CommandedDebugger.Buffer do
   end
 
   def get_state() do
+    # TestState.get()
     GenServer.call({@process_name, node_address}, :get_state)
   end
 
   def update(uuid, data) do
     GenServer.cast({@process_name, node_address}, {:update, {uuid, data}})
+  end
+
+  def reset() do
+    GenServer.call({@process_name, node_address}, :reset)
   end
 
   def node_address do
@@ -45,6 +51,11 @@ defmodule CommandedDebugger.Buffer do
   @impl true
   def handle_call(:get_state, _from, state) do
     {:reply, state, state}
+  end
+
+  @impl true
+  def handle_call(:reset, _from, state) do
+    {:reply, [], []}
   end
 
   defp update_data(%CommandAudit{uuid: command_uuid} = command, {uuid, data})

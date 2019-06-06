@@ -41,6 +41,13 @@ defmodule CommandedDebugger.Debugger do
         msg
       ) do
     case msg do
+      {:event, %{ch: ?r}} ->
+        Buffer.reset()
+        %{model | buffer: [], trees: []}
+
+      {:event, %{ch: ?k}} ->
+        %{model | content_cursor: max(content_cursor - 1, 0)}
+
       {:event, %{ch: ?k}} ->
         %{model | content_cursor: max(content_cursor - 1, 0)}
 
@@ -147,7 +154,7 @@ defmodule CommandedDebugger.Debugger do
   defp title(nil), do: "Nothing selected"
 
   defp header do
-    "Commanded Debugger (UP/DOWN to select command/event, j/k to scroll content). Node: #{
+    "Commanded Debugger (UP/DOWN to select command/event, j/k to scroll content, r to reset buffer). Node: #{
       Node.self()
     }"
   end
