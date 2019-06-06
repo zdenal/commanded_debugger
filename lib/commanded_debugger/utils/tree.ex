@@ -4,38 +4,99 @@ defmodule CommandedDebugger.Utils.Tree do
 
   alias CommandedDebugger.{EventAudit, CommandAudit}
 
-  @style_selected [
-    color: color(:black),
-    background: color(:white)
-  ]
+  defmodule Node do
+    defstruct [:uuid, :content, :parent_uuid, :data, children: []]
+  end
 
-  def group_by(items, key) do
+  def correlation_trees(buffer) do
+    for {{correlation_id, items}, idx} <- group_by(buffer, :correlation_id) |> Enum.with_index() do
+      %Node{
+        uuid: idx,
+        parent_uuid: nil,
+        content: "[Cor] " <> correlation_id,
+        children: correlation_tree(items, idx)
+      }
+    end
+  end
+
+  def move_cursor([], [], _direction), do: []
+
+  def move_cursor([h | _], [], _direction) do
+    [h]
+  end
+
+  def move_cursor(trees, [current_node | tail] = cursor, :down) do
+    if Enum.empty?(current_node.children) do
+      next_in_parent(trees, tail, current_node)
+    else
+      [List.first(current_node.children) | cursor]
+    end
+  end
+
+  def move_cursor(trees, [current_node | tail] = cursor, :up) do
+    prev_in_parent(trees, tail, current_node)
+  end
+
+  defp prev_in_parent(trees, [], current_node) do
+    idx = Enum.find_index(trees, fn t -> t.uuid == current_node.uuid end)
+
+    if idx == 0, do: [List.last(trees)], else: [Enum.at(trees, idx - 1)]
+  end
+
+  defp prev_in_parent(trees, [parent | tail] = cursor, current_node) do
+    idx = Enum.find_index(parent.children, fn t -> t.uuid == current_node.uuid end)
+
+    if idx == 0,
+      do: cursor,
+      else: [Enum.at(parent.children, idx - 1) | cursor]
+  end
+
+  defp next_in_parent(trees, [], current_node) do
+    idx = Enum.find_index(trees, fn t -> t.uuid == current_node.uuid end)
+    size = length(trees)
+
+    if idx + 1 == size, do: [List.first(trees)], else: [Enum.at(trees, idx + 1)]
+  end
+
+  defp next_in_parent(trees, [parent | tail] = cursor, current_node) do
+    idx = Enum.find_index(parent.children, fn t -> t.uuid == current_node.uuid end)
+    size = length(parent.children)
+
+    if idx + 1 == size,
+      do: next_in_parent(trees, tail, parent),
+      else: [Enum.at(parent.children, idx + 1) | cursor]
+  end
+
+  defp group_by(items, key) do
     items |> Enum.group_by(fn i -> Map.get(i, key) end)
   end
 
-  def item_to_tree_node({item, idx}, offset, cursor) do
-    attrs =
-      if not is_nil(cursor) and offset + idx == cursor do
-        [content: content(item)] ++ @style_selected
-      else
-        [content: content(item)]
-      end
-
-    tree_node(attrs)
-  end
-
-  def correlation_tree(items) do
+  defp correlation_tree(items, parent_uuid) do
     roots = get_roots(items)
 
     Enum.map(roots, fn root ->
-      tree_node([content: content(root)], get_children(root, items))
+      %Node{
+        uuid: root.uuid,
+        parent_uuid: parent_uuid,
+        data: root,
+        content: content(root),
+        children: get_children(root, items)
+      }
     end)
   end
 
   defp get_children(root, items) do
     children = Enum.filter(items, fn i -> i.causation_id == root.uuid end)
 
-    Enum.map(children, fn ch -> tree_node([content: content(ch)], get_children(ch, items)) end)
+    Enum.map(children, fn ch ->
+      %Node{
+        uuid: ch.uuid,
+        parent_uuid: root.uuid,
+        content: content(ch),
+        data: ch,
+        children: get_children(ch, items)
+      }
+    end)
   end
 
   defp get_roots(items) do

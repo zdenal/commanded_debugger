@@ -1,7 +1,7 @@
 defmodule CommandedDebugger.Debugger do
   @behaviour Ratatouille.App
 
-  import Ratatouille.Constants, only: [key: 1]
+  import Ratatouille.Constants, only: [key: 1, color: 1]
   import Ratatouille.View
 
   alias CommandedDebugger.Buffer
@@ -12,14 +12,20 @@ defmodule CommandedDebugger.Debugger do
   @arrow_up key(:arrow_up)
   @arrow_down key(:arrow_down)
 
+  @style_selected [
+    color: color(:black),
+    background: color(:white)
+  ]
+
   def init(_context) do
     buffer = Buffer.get_state()
 
     model = %{
       content: %{},
       content_cursor: 0,
-      module_cursor: 0,
-      buffer: buffer
+      tree_cursor: [],
+      buffer: buffer,
+      trees: Tree.correlation_trees(buffer)
     }
 
     {model, update_cmd(model)}
@@ -28,7 +34,8 @@ defmodule CommandedDebugger.Debugger do
   def update(
         %{
           content_cursor: content_cursor,
-          module_cursor: module_cursor,
+          tree_cursor: tree_cursor,
+          trees: trees,
           buffer: buffer
         } = model,
         msg
@@ -43,15 +50,16 @@ defmodule CommandedDebugger.Debugger do
       {:event, %{key: key}} when key in [@arrow_up, @arrow_down] ->
         new_cursor =
           case key do
-            @arrow_up -> max(module_cursor - 1, 0)
-            @arrow_down -> min(module_cursor + 1, length(buffer) - 1)
+            @arrow_up -> Tree.move_cursor(trees, tree_cursor, :up)
+            @arrow_down -> Tree.move_cursor(trees, tree_cursor, :down)
           end
 
-        new_model = %{model | module_cursor: new_cursor}
+        new_model = %{model | tree_cursor: new_cursor}
         {new_model, update_cmd(new_model)}
 
       :refresh ->
-        %{model | buffer: Buffer.get_state()}
+        new_buffer = Buffer.get_state()
+        %{model | buffer: new_buffer, trees: Tree.correlation_trees(new_buffer)}
 
       {:content_updated, content} ->
         %{model | content: content}
@@ -68,7 +76,7 @@ defmodule CommandedDebugger.Debugger do
   end
 
   def render(model) do
-    selected = Enum.at(model.buffer, model.module_cursor)
+    selected = get_selected(model)
 
     menu_bar =
       bar do
@@ -79,15 +87,8 @@ defmodule CommandedDebugger.Debugger do
       row do
         column(size: 7) do
           panel(title: "Commands / Events", height: :fill) do
-            # viewport(offset_y: model.module_cursor) do
+            # viewport(offset_y: model.tree_cursor) do
             viewport do
-              # for {item, idx} <- Enum.with_index(model.buffer) do
-              # if idx == model.module_cursor do
-              # label(content: "> " <> title(item), attributes: [:bold])
-              # else
-              # label(content: title(item))
-              # end
-              # end
               tree_view(model)
             end
           end
@@ -104,24 +105,36 @@ defmodule CommandedDebugger.Debugger do
     end
   end
 
-  defp tree_view(%{buffer: buffer, module_cursor: cursor}) do
+  defp tree_view(%{trees: trees, tree_cursor: cursor}) do
     tree do
-      for {correlation_id, items} <- Tree.group_by(buffer, :correlation_id) do
-        tree_node(
-          [content: "[Cor] " <> correlation_id],
-          Tree.correlation_tree(items)
-        )
-      end
+      Enum.map(trees, &node_to_tree(&1, cursor))
     end
   end
 
-  defp update_cmd(model) do
-    Command.new(fn -> fetch_content(model) end, :content_updated)
+  defp node_to_tree(node, cursor) do
+    current_cursor = List.first(cursor)
+
+    attrs =
+      if current_cursor && current_cursor.uuid == node.uuid do
+        [content: node.content] ++ @style_selected
+      else
+        [content: node.content]
+      end
+
+    tree_node(
+      attrs,
+      Enum.map(node.children, &node_to_tree(&1, cursor))
+    )
   end
 
-  defp fetch_content(%{module_cursor: cursor, buffer: buffer}) do
-    Enum.at(buffer, cursor)
+  defp update_cmd(model) do
+    Command.new(fn -> get_selected(model) end, :content_updated)
   end
+
+  defp get_selected(%{tree_cursor: []}), do: nil
+
+  defp get_selected(%{tree_cursor: [current_node | _], buffer: buffer}),
+    do: Enum.find(buffer, fn b -> b.uuid == current_node.uuid end)
 
   defp display_content(%_{data: data} = item) do
     Map.from_struct(item) |> Map.put(:data, Jason.decode!(data)) |> Jason.encode!(pretty: true)
