@@ -15,7 +15,8 @@ This application is still under developing. It is not perfect there are still st
 Feel free to contribute.
 
 ### Example
-This example is made with https://github.com/slashdotdash/conduit. The commands/events are grouped in tree by `correlation_id`.
+This example is made with https://github.com/slashdotdash/conduit. The commands/events are grouped in tree view by `correlation_id` and linked by `causation_id`.
+
 ![Example](assets/commanded-debugger.gif)
 
 ## Installation
