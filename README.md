@@ -38,7 +38,7 @@ This will be soon moved to hex packages when some details will be solved ..
 
 This middleware is logic inspired by [commanded-audit-middleware](https://github.com/commanded/commanded-audit-middleware)
 
-- run your application with `--sname` to run node with correctly set host: `iex --sname app -S mix phx.server`
+- run your application with `--sname` to run node with correctly set host: `elixir --sname app -S mix phx.server` or if you want iteractive mode `iex --sname app -S mix phx.server`
 
 For first time please wait for while to get CommandedDebugger event handler up to date. If you would have
 runned CommandedDebugger app in another terminal the app could get stuck w/ a huge amount of events (depends how many
