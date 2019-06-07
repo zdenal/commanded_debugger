@@ -64,6 +64,7 @@ The buffer is keeping commands/events in process state and they are not saved an
 
 
 # TODO
+- [ ] handle offset-y for walking trhough tree
 - [ ] better tree manipulating. Also after getting new events/command the navigating is not working correctly for while as tree was changed.
 - [ ] better handling new tree structure when new events/commands are comming to not changing so much
 - [ ] better displaying of event/command detail (split it to meaningfull sections)
