@@ -33,32 +33,7 @@ end
 
 This will be soon moved to hex packages when some details will be solved ..
 
-- add `:commanded_application` to `extra_applications`
-```elixir
-def application do
-  [
-    extra_applications: [:logger, :commanded_debugger],
-    mod: {YourApp.Application, []}
-  ]
-end
-```
-
 - add to your routers middleware `middleware(CommandedDebugger.Middleware)` which is sending commands to CommandedDebugger buffer
-- add `CommandedDebugger.EventHandler` into some supervisor to make sure it is started (subsribing to `$all` by default).It will send each event into buffer running on UI application.
-
-Example from Conduit test:
-```elixir
-Supervisor.init(
-  [
-    Blog.Projectors.Article,
-    Blog.Projectors.Tag,
-    Blog.Workflows.CreateAuthorFromUser,
-    CommandedDebugger.EventHandler
-  ],
-  strategy: :one_for_one
-)
-```
-
 
 This middleware is logic inspired by [commanded-audit-middleware](https://github.com/commanded/commanded-audit-middleware)
 
@@ -77,8 +52,8 @@ by correlations and linked by causations. The events/commands are stored only in
 
 
 ## How it works
-Starting properly your app with `--sname` will allow to comunnicate with CommandedDebugger UI (runned by `./bin/start` from CommandedDebugger repository). The `:commanded_debugger` within
-your `extra_applications` will connect nodes (app & debugger ui). The same with middlewares, they will make
+Starting properly your app with `--sname` will allow to comunnicate with CommandedDebugger UI (runned by `./bin/start` from CommandedDebugger repository). The CommandedDebugger will automatically run event handler which
+will send each event to CommandedDebugger buffer in UI app. The same with middlewares, they will make
 sure the commands from routers will be sent into buffer also.
 
 The buffer is keeping commands/events in process state and they are not saved anywhere, so it is only for debugging purposes.
@@ -92,18 +67,3 @@ The buffer is keeping commands/events in process state and they are not saved an
 - [ ] better handling new tree structure when new events/commands are comming to not changing so much
 - [ ] better displaying of event/command detail (split it to meaningfull sections)
 - [ ] find way how to used this w/ tests (integration test, ...)
-
-# Questions / Issues
-I was trying to start event handler automatically by application inside debugged project/application [here](lib/commanded_debugger/application.ex) 17th line, but in some apps getting error
-on start
-```
-** (Mix) Could not start application commanded_debugger: CommandedDebugger.Application.start(:normal, []) returned an error: shutdown: failed to start child: {CommandedDebugger.EventHandler, "commanded_debugger_event_handler"}
-    ** (EXIT) an exception was raised:
-        ** (ArgumentError) unknown registry: Commanded.Registration.LocalRegistry
-            (elixir) lib/registry.ex:1154: Registry.key_info!/1
-            (elixir) lib/registry.ex:213: Registry.whereis_name/2
-            (stdlib) gen.erl:76: :gen.start/6
-
-```
-It is caused, because the `:commanded_debugger` is started before application itself (by `extra_applications: [.., :commanded_debugger]`. Maybe there is some way how to solve this and
-avoid the need add CommandedDebugger event handler manually into some supervisor in debugged application. If you know please help.

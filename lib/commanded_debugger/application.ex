@@ -13,9 +13,8 @@ defmodule CommandedDebugger.Application do
           [{CommandedDebugger.Buffer, []}]
 
         _ ->
-          CommandedDebugger.Buffer.node_address() |> Node.connect()
-          # [{CommandedDebugger.EventHandler, []}]
-          []
+          # CommandedDebugger.Buffer.node_address() |> Node.connect()
+          [{CommandedDebugger.EventHandler, []}]
       end
 
     # See https://hexdocs.pm/elixir/Supervisor.html
