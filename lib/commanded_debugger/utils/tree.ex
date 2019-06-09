@@ -5,18 +5,21 @@ defmodule CommandedDebugger.Utils.Tree do
   alias CommandedDebugger.{EventAudit, CommandAudit}
 
   defmodule Node do
-    defstruct [:uuid, :content, :parent_uuid, :data, children: []]
+    defstruct [:uuid, :content, :parent_uuid, :data, :min_datetime, children: []]
   end
 
   def correlation_trees(buffer) do
-    for {{correlation_id, items}, idx} <- group_by(buffer, :correlation_id) |> Enum.with_index() do
+    for {{correlation_id, items}, idx} <-
+          group_by(buffer, :correlation_id) |> Enum.with_index() do
       %Node{
         uuid: idx,
         parent_uuid: nil,
         content: "[Cor] " <> correlation_id,
         children: correlation_tree(items, idx)
       }
+      |> add_min_datetime()
     end
+    |> Enum.sort_by(fn node -> node.min_datetime end, &<=/2)
   end
 
   def move_cursor([], [], _direction), do: []
@@ -36,6 +39,21 @@ defmodule CommandedDebugger.Utils.Tree do
   def move_cursor(trees, [current_node | tail] = cursor, :up) do
     prev_in_parent(trees, tail, current_node)
   end
+
+  defp min_children_time(%Node{children: []} = node), do: children_time(node)
+
+  defp min_children_time(%Node{children: children}) do
+    Enum.map(children, &children_time/1) |> Enum.min()
+  end
+
+  defp children_time(%Node{children: [], data: data}), do: children_time(data)
+  defp children_time(%Node{min_datetime: t}), do: t
+  defp children_time(%CommandAudit{occurred_at: t}), do: time_to_string(t)
+  defp children_time(%EventAudit{created_at: t}), do: time_to_string(t)
+
+  defp time_to_string(%NaiveDateTime{} = t), do: NaiveDateTime.to_iso8601(t)
+  defp time_to_string(%DateTime{} = t), do: DateTime.to_iso8601(t)
+  defp time_to_string(t), do: t
 
   defp prev_in_parent(trees, [], current_node) do
     idx = Enum.find_index(trees, fn t -> t.uuid == current_node.uuid end)
@@ -82,7 +100,9 @@ defmodule CommandedDebugger.Utils.Tree do
         content: content(root),
         children: get_children(root, items)
       }
+      |> add_min_datetime()
     end)
+    |> Enum.sort_by(fn node -> node.min_datetime end, &<=/2)
   end
 
   defp get_children(root, items) do
@@ -96,8 +116,12 @@ defmodule CommandedDebugger.Utils.Tree do
         data: ch,
         children: get_children(ch, items)
       }
+      |> add_min_datetime()
     end)
+    |> Enum.sort_by(fn node -> node.min_datetime end, &<=/2)
   end
+
+  defp add_min_datetime(%Node{} = node), do: %Node{node | min_datetime: min_children_time(node)}
 
   defp get_roots(items) do
     uuids =

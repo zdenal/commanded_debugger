@@ -116,7 +116,7 @@ defmodule CommandedDebugger.Debugger do
       table do
         table_row do
           table_cell(content: "created_at")
-          table_cell(content: created_at(content))
+          table_cell(content: display_created_at(content))
         end
 
         table_row do
