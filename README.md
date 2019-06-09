@@ -52,6 +52,14 @@ The debugger is getting events/commands from your app and you can see the comman
 by correlations and linked by causations. The events/commands are stored only in process state (no persistent layer).
 
 
+## Use with your integration tests
+You can also use this tool w/ your integration tests to see the flow of commands/events.
+
+- start CommandedDebugger UI by `./bin/start` in CommandedDebugger repository
+- run your integration test with `--sname` eg:
+  - `elixir --sname app -S mix test test/integrations/registration_test.exs:260`
+
+
 ## How it works
 Starting properly your app with `--sname` will allow to comunnicate with CommandedDebugger UI (runned by `./bin/start` from CommandedDebugger repository). The CommandedDebugger will automatically run event handler which
 will send each event to CommandedDebugger buffer in UI app. The same with middlewares, they will make
@@ -67,5 +75,3 @@ The buffer is keeping commands/events in process state and they are not saved an
 - [ ] handle offset-y for walking trhough tree
 - [ ] better tree manipulating. Also after getting new events/command the navigating is not working correctly for while as tree was changed.
 - [ ] better handling new tree structure when new events/commands are comming to not changing so much
-- [ ] better displaying of event/command detail (split it to meaningfull sections)
-- [ ] find way how to used this w/ tests (integration test, ...)

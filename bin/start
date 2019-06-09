@@ -1,3 +1,3 @@
 #!/bin/bash -e
 
-iex --sname CommandedDebugger -S mix commanded_debugger.start
+elixir --sname CommandedDebugger -S mix commanded_debugger.start

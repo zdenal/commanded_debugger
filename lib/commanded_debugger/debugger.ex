@@ -3,10 +3,10 @@ defmodule CommandedDebugger.Debugger do
 
   import Ratatouille.Constants, only: [key: 1, color: 1]
   import Ratatouille.View
+  import CommandedDebugger.Utils.View
 
   alias CommandedDebugger.Buffer
   alias Ratatouille.Runtime.{Subscription, Command}
-  alias CommandedDebugger.{EventAudit, CommandAudit}
   alias CommandedDebugger.Utils.Tree
 
   @arrow_up key(:arrow_up)
@@ -21,7 +21,7 @@ defmodule CommandedDebugger.Debugger do
     buffer = Buffer.get_state()
 
     model = %{
-      content: %{},
+      content: nil,
       content_cursor: 0,
       tree_cursor: [],
       buffer: buffer,
@@ -35,18 +35,14 @@ defmodule CommandedDebugger.Debugger do
         %{
           content_cursor: content_cursor,
           tree_cursor: tree_cursor,
-          trees: trees,
-          buffer: buffer
+          trees: trees
         } = model,
         msg
       ) do
     case msg do
       {:event, %{ch: ?r}} ->
         Buffer.reset()
-        %{model | buffer: [], trees: [], content: %{}}
-
-      {:event, %{ch: ?k}} ->
-        %{model | content_cursor: max(content_cursor - 1, 0)}
+        %{model | buffer: [], trees: [], content: nil, content_cursor: 0}
 
       {:event, %{ch: ?k}} ->
         %{model | content_cursor: max(content_cursor - 1, 0)}
@@ -61,7 +57,7 @@ defmodule CommandedDebugger.Debugger do
             @arrow_down -> Tree.move_cursor(trees, tree_cursor, :down)
           end
 
-        new_model = %{model | tree_cursor: new_cursor}
+        new_model = %{model | tree_cursor: new_cursor, content_cursor: 0}
         {new_model, update_cmd(new_model)}
 
       :refresh ->
@@ -103,12 +99,56 @@ defmodule CommandedDebugger.Debugger do
 
         column(size: 5) do
           panel(title: title(selected), height: :fill) do
-            viewport(offset_y: model.content_cursor) do
-              label(content: display_content(model.content))
-            end
+            content_view(model)
           end
         end
       end
+    end
+  end
+
+  defp content_view(%{content: nil}), do: label(content: "")
+
+  defp content_view(%{content_cursor: content_cursor, content: content}) do
+    viewport(offset_y: content_cursor) do
+      label(content: "Info", attributes: [:bold, :underline])
+      label(content: "")
+
+      table do
+        table_row do
+          table_cell(content: "created_at")
+          table_cell(content: created_at(content))
+        end
+
+        table_row do
+          table_cell(content: "correlation_id")
+          table_cell(content: content.correlation_id)
+        end
+
+        table_row do
+          table_cell(content: "causation_id")
+          table_cell(content: content.causation_id)
+        end
+
+        table_row do
+          table_cell(content: "type")
+          table_cell(content: content.type)
+        end
+
+        table_row do
+          table_cell(content: "uuid")
+          table_cell(content: content.uuid)
+        end
+      end
+
+      label(content: "Data", attributes: [:bold, :underline])
+      label(content: "")
+
+      label(content: display(content.data))
+      label(content: "")
+
+      label(content: "Metadata", attributes: [:bold, :underline])
+      label(content: "")
+      label(content: content.metadata |> Jason.encode!(pretty: true))
     end
   end
 
@@ -142,20 +182,4 @@ defmodule CommandedDebugger.Debugger do
 
   defp get_selected(%{tree_cursor: [current_node | _], buffer: buffer}),
     do: Enum.find(buffer, fn b -> b.uuid == current_node.uuid end)
-
-  defp display_content(%_{data: data} = item) do
-    Map.from_struct(item) |> Map.put(:data, Jason.decode!(data)) |> Jason.encode!(pretty: true)
-  end
-
-  defp display_content(_), do: ""
-
-  defp title(%CommandAudit{type: type}), do: type |> String.replace("Elixir.", "[Com] ")
-  defp title(%EventAudit{type: type}), do: type |> String.replace("Elixir.", "[Evt] ")
-  defp title(nil), do: "Nothing selected"
-
-  defp header do
-    "Commanded Debugger (UP/DOWN to select command/event, j/k to scroll content, r to reset buffer). Node: #{
-      Node.self()
-    }"
-  end
 end
